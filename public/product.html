@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product • StockY</title>
+  <link rel="stylesheet" href="/style.css" />
+
+  <!-- scripts -->
+  <script defer src="/transition.js"></script>
+  <script defer src="/api-client.js"></script>
+  <script defer src="/script.js"></script>
+</head>
+<body>
+  <!-- ================= HEADER ================= -->
+  <header class="site-header">
+    <div class="container nav">
+      <!-- Logo -->
+      <div class="nav__brand">
+        <a href="/index.html" class="nav__home-link">
+          <img src="/assets/logo.png" alt="StockY logo" class="nav__logo-img" />
+        </a>
+        <strong>StockY</strong>
+      </div>
+
+      <!-- Search -->
+      <label class="nav__search" aria-label="Search">
+        <svg width="16" height="16" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" fill="none" />
+          <line x1="12" y1="12" x2="15" y2="15" stroke="currentColor" />
+        </svg>
+        <input type="search" placeholder="Search sneakers, brands…" />
+      </label>
+
+      <!-- Right-side buttons -->
+      <div class="nav__cta">
+        <!-- Login / Sign Up Links -->
+        <a class="btn" href="/login.html" id="login-link">Login</a>
+        <a class="btn btn--primary" href="/register.html" id="signup-link">Sign Up</a>
+        <!-- Logged-in user display -->
+        <span id="user-display" style="display:none;">
+          Hello, <strong id="user-name"></strong>! <a href="/logout">Logout</a>
+        </span>
+        <button id="theme-toggle" class="btn" aria-label="Toggle color theme" title="Theme">🌙</button>
+      </div>
+    </div>
+
+    <!-- Category bar -->
+    <nav class="category-bar">
+      <div class="container category-bar__inner">
+        <a href="/index.html">All</a>
+        <a href="/products/brands.html">Brands</a>
+        <a href="/products/trending.html">Trending</a>
+        <a href="/products/mens.html">Mens</a>
+        <a href="/products/womens.html">Womens</a>
+        <a href="/products/kids.html">Kids</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main class="container page">
+    <section class="section product">
+      <!-- Left: gallery -->
+      <div class="product__gallery card">
+        <div class="product__main" aria-live="polite">
+          <img src="/assets/placeholder-shoe.png" alt="Air Jordan 4 Retro Cool Grey shoe" />
+        </div>
+        <div class="product__thumbs">
+          <button class="thumb is-active"><img src="/assets/placeholder-shoe.png" alt="Main view"></button>
+          <button class="thumb"><img src="/assets/placeholder-shoe-2.png" alt="Side view"></button>
+          <button class="thumb"><img src="/assets/placeholder-shoe-3.png" alt="Back view"></button>
+        </div>
+      </div>
+
+      <!-- Right: info -->
+      <aside class="product__info">
+        <header class="product__header">
+          <h1 class="section__title">Air Jordan 4 Retro “Cool Grey”</h1>
+          <p class="card__meta">Style Code: 308497-007 • Year: 2019 • Condition: Brand New in Box</p>
+        </header>
+
+     <div class="product__sizes">
+  <p class="label">Select Size (US M):</p>
+  <div class="size-grid" id="sizeGrid" role="listbox" aria-label="Shoe sizes"></div>
+</div>
+
+        <div class="buy-bar card">
+          <div class="price">
+            <span class="price__label">Price</span>
+            <strong class="price__value">$289.00</strong>
+          </div>
+          <button id="checkoutBtn" class="btn btn--primary buy-bar__cta" disabled>Checkout</button>
+        </div>
+
+        <details class="accordion" open>
+          <summary>Description</summary>
+          <div class="accordion__body">
+            <ul class="product__specs">
+              <li><strong>Condition:</strong> Brand New (Deadstock)</li>
+              <li><strong>Style Code:</strong> 308497-007</li>
+              <li><strong>Year of Release:</strong> 2019</li>
+              <li><strong>Colorway:</strong> Cool Grey / White</li>
+            </ul>
+            <p class="mt-8">Classic AJ4 palette with nubuck upper and chrome accents. True-to-size fit.</p>
+          </div>
+        </details>
+      </aside>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">You Might Also Like</h2>
+      <div class="products-grid" id="related-products">
+        <!-- Related products will be loaded here -->
+      </div>
+    </section>
+
+    <!-- ================= FOOTER ================= -->
+<footer class="site-footer">
+  <nav class="footer-nav">
+    <a href="/index.html">Home</a>
+    <a class="is-active" href="/products/brands.html">Shop</a>
+    <a href="/faq.html">FAQ</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/about.html">Our Story</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/privacy.html">Privacy</a>
+  </nav>
+</footer>
+
+  </main>
+
+ <script>
+  // Check session-user and update header
+  fetch("/session-user")
+    .then(res => res.json())
+    .then(data => {
+      if (data.loggedIn) {
+        // Hide login/signup buttons
+        const loginLink = document.getElementById("login-link");
+        const signupLink = document.getElementById("signup-link");
+        const userDisplay = document.getElementById("user-display");
+        const userName = document.getElementById("user-name");
+        
+        if (loginLink) loginLink.style.display = "none";
+        if (signupLink) signupLink.style.display = "none";
+        if (userDisplay) userDisplay.style.display = "inline";
+        if (userName) userName.textContent = `${data.first} ${data.last}`;
+      }
+    });
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("id");
+
+    if (!productId) {
+      alert("Product ID is required.");
+      window.location.href = "/index.html";
+      return;
+    }
+
+    // Fetch product from API
+    if (!window.ProductAPI) {
+      alert("API client not loaded. Please refresh the page.");
+      return;
+    }
+
+    const product = await window.ProductAPI.fetchProduct(productId);
+
+    if (!product) {
+      alert("Product not found.");
+      window.location.href = "/index.html";
+      return;
+    }
+
+    const titleEl    = document.querySelector(".product__header .section__title");
+    const metaEl     = document.querySelector(".product__header .card__meta");
+    const mainImg    = document.querySelector(".product__main img");
+    const thumbsWrap = document.querySelector(".product__thumbs");
+    const sizeGrid   = document.getElementById("sizeGrid");
+    const priceEl    = document.querySelector(".price__value");
+    const checkoutBtn= document.getElementById("checkoutBtn");
+
+    const fmt = (n) => `$${Number(n).toFixed(2)}`;
+
+    // ---- Fill basic info ----
+    document.title = `${product.title} • StockY`;
+
+    if (titleEl) titleEl.textContent = product.title;
+    if (metaEl) {
+      metaEl.textContent =
+        `Style Code: ${product.styleCode} • Year: ${product.year} • Condition: ${product.condition}`;
+    }
+
+    if (mainImg) {
+      mainImg.src = product.hero;
+      mainImg.alt = product.title;
+    }
+
+    // ---- Thumbnails ----
+    if (thumbsWrap && product.thumbs?.length) {
+      thumbsWrap.innerHTML = "";
+      product.thumbs.forEach((src, index) => {
+        const btn = document.createElement("button");
+        btn.className = "thumb" + (index === 0 ? " is-active" : "");
+        btn.innerHTML = `<img src="${src}" alt="${product.title} view ${index + 1}">`;
+        btn.addEventListener("click", () => {
+          if (mainImg) mainImg.src = src;
+          thumbsWrap.querySelectorAll(".thumb").forEach(t => t.classList.remove("is-active"));
+          btn.classList.add("is-active");
+        });
+        thumbsWrap.appendChild(btn);
+      });
+    }
+
+    // ---- Sizes ----
+    if (sizeGrid && Array.isArray(product.sizes)) {
+      sizeGrid.innerHTML = "";
+      product.sizes.forEach(({ size, price }) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "size";
+        b.dataset.size = size;
+        b.dataset.price = price;
+        b.setAttribute("role", "option");
+        b.textContent = size;
+        sizeGrid.appendChild(b);
+      });
+    }
+
+    let selectedSize  = null;
+    let selectedPrice = null;
+
+    if (sizeGrid) {
+      sizeGrid.addEventListener("click", (e) => {
+        const btn = e.target.closest(".size");
+        if (!btn) return;
+
+        sizeGrid.querySelectorAll(".size").forEach(b => {
+          b.classList.remove("is-selected");
+          b.setAttribute("aria-selected", "false");
+        });
+
+        btn.classList.add("is-selected");
+        btn.setAttribute("aria-selected", "true");
+
+        selectedSize  = btn.dataset.size;
+        selectedPrice = Number(btn.dataset.price);
+
+        if (!Number.isNaN(selectedPrice) && priceEl) {
+          priceEl.textContent = fmt(selectedPrice);
+        }
+
+        // Save as one-item cart in localStorage
+        const cartItem = {
+          id: product.id,
+          title: product.title,
+          brand: product.brand,
+          size: selectedSize,
+          price: selectedPrice,
+          qty: 1,
+          hero: product.hero
+        };
+        localStorage.setItem("cart", JSON.stringify([cartItem]));
+
+        if (checkoutBtn) checkoutBtn.disabled = false;
+      });
+    }
+
+    // ---- Checkout button ----
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener("click", (e) => {
+        if (!selectedSize) {
+          e.preventDefault();
+          alert("Please select a size first.");
+          return;
+        }
+        window.location.href = "/checkout.html";
+      });
+    }
+
+    // Load related products
+    if (product.related && product.related.length > 0 && window.ProductAPI && window.ProductRenderer) {
+      try {
+        const relatedProducts = await Promise.all(
+          product.related.slice(0, 4).map(id => window.ProductAPI.fetchProduct(id))
+        );
+        const validRelated = relatedProducts.filter(p => p !== null);
+        const relatedGrid = document.getElementById('related-products');
+        if (relatedGrid && validRelated.length > 0) {
+          window.ProductRenderer.renderProductGrid(validRelated, relatedGrid);
+        }
+      } catch (error) {
+        console.error('Error loading related products:', error);
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

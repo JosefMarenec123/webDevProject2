@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StockY • Home</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script defer src="/transition.js"></script>
+  <script defer src="/theme.js"></script>
+</head>
+<body>
+  <!-- ================= HEADER ================= -->
+  <header class="site-header">
+    <div class="container nav">
+      <div class="nav__brand">
+        <a href="/index.html" class="nav__home-link">
+          <img src="/assets/logo.png" alt="StockY logo" class="nav__logo-img" />
+        </a>
+        <strong>StockY</strong>
+      </div>
+
+      <label class="nav__search" aria-label="Search">
+        <svg width="16" height="16" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" fill="none" />
+          <line x1="12" y1="12" x2="15" y2="15" stroke="currentColor" />
+        </svg>
+        <input type="search" placeholder="Search sneakers, brands…" />
+      </label>
+
+      <div class="nav__cta">
+        <!-- Login / Sign Up Links -->
+        <a class="btn" href="/login.html" id="login-link">Login</a>
+        <a class="btn btn--primary" href="/register.html" id="signup-link">Sign Up</a>
+        <!-- Logged-in user display -->
+        <span id="user-display" style="display:none;">
+          Hello, <strong id="user-name"></strong>! <a href="/logout">Logout</a>
+        </span>
+        <button id="theme-toggle" class="btn" title="Theme">🌙</button>
+      </div>
+    </div>
+
+    <!-- Category bar -->
+    <nav class="category-bar">
+      <div class="container category-bar__inner">
+        <a href="/index.html" class="is-active">All</a>
+        <a href="/products/brands.html">Brands</a>
+        <a href="/products/trending.html">Trending</a>
+        <a href="/products/mens.html">Mens</a>
+        <a href="/products/womens.html">Womens</a>
+        <a href="/products/kids.html">Kids</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main class="container page">
+    <!-- Slider -->
+    <section class="hero">
+      <div class="hero__slide">SLIDER</div>
+    </section>
+
+    <!-- Recently Viewed -->
+    <section class="section">
+      <h2 class="section__title">Recently Viewed</h2>
+      <div class="products-grid">
+        <!-- Product cards... -->
+      </div>
+    </section>
+
+    <!-- Recommended For You -->
+    <section class="section">
+      <h2 class="section__title">Recommended For You</h2>
+      <div class="products-grid">
+        <!-- Product cards... -->
+      </div>
+    </section>
+
+    <!-- Popular Brands -->
+    <section class="section">
+      <h2 class="section__title">Popular Brands</h2>
+      <div class="brands-grid">
+        <!-- Brand cards... -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <nav class="footer-nav">
+      <a href="/index.html">Home</a>
+      <a href="/products/brands.html">Shop</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/contact.html">Contact</a>
+      <a href="/about.html">Our Story</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+  </footer>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script defer src="/api-client.js"></script>
+  <script defer src="/product-renderer.js"></script>
+  <script>
+    // Check session-user and update header
+    fetch("/session-user")
+      .then(res => res.json())
+      .then(data => {
+        if (data.loggedIn) {
+          // Hide login/signup buttons
+          document.getElementById("login-link").style.display = "none";
+          document.getElementById("signup-link").style.display = "none";
+
+          // Show logged-in user info
+          document.getElementById("user-display").style.display = "inline";
+          document.getElementById("user-name").textContent = `${data.first} ${data.last}`;
+        }
+      });
+    
+    // Load and render products
+    document.addEventListener("DOMContentLoaded", async () => {
+      if (!window.ProductAPI || !window.ProductRenderer) {
+        console.error('API client or renderer not loaded');
+        return;
+      }
+      
+      try {
+        // Fetch recommended products (limit to 6)
+        const recommended = await window.ProductAPI.fetchProducts({ limit: 6 });
+        const recommendedGrid = document.querySelector('.section:nth-of-type(2) .products-grid');
+        if (recommendedGrid) {
+          window.ProductRenderer.renderProductGrid(recommended, recommendedGrid);
+        }
+        
+        // Fetch recently viewed (could be from localStorage or just show more products)
+        const recentlyViewed = await window.ProductAPI.fetchProducts({ limit: 4 });
+        const recentlyViewedGrid = document.querySelector('.section:nth-of-type(1) .products-grid');
+        if (recentlyViewedGrid) {
+          window.ProductRenderer.renderProductGrid(recentlyViewed, recentlyViewedGrid);
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    });
+  </script>
+</body>
+</html>
